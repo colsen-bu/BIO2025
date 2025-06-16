@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIO2025 Blog Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            margin: 0;
+            padding: 40px;
+            background-color: #fff;
+            color: #000;
+        }
+        
+        .editor-container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #000;
+        }
+        
+        .slug-display {
+            font-size: 14px;
+            color: #666;
+            font-family: monospace;
+            margin-top: 5px;
+        }
+        
+        #editor { 
+            height: 500px; 
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .ql-toolbar {
+            border-top: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .ql-container {
+            border-bottom: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .controls { 
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            margin: 0 10px;
+            border: 1px solid #000;
+            background: white;
+            color: #000;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: inherit;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 4px;
+        }
+        
+        .btn:hover {
+            background: #f5f5f5;
+        }
+        
+        .btn-primary {
+            background: #000;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #333;
+        }
+        
+        .output { 
+            margin-top: 30px; 
+            padding: 20px; 
+            background: #f9f9f9; 
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .output h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .output textarea {
+            width: 100%; 
+            height: 200px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        
+        .preview {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .preview h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+            text-align: center;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="header">
+            <h1>BIO2025 Blog Editor</h1>
+            <p>Write your blog posts with rich formatting, then export to your blog</p>
+        </div>
+        
+        <div class="form-group">
+            <label for="post-title">Post Title</label>
+            <input type="text" id="post-title" placeholder="Enter your blog post title..." />
+            <div class="slug-display">URL will be: <span id="slug-preview">your-post-title</span>.html</div>
+        </div>
+        
+        <div class="form-group">
+            <label for="post-excerpt">Excerpt (appears on homepage)</label>
+            <textarea id="post-excerpt" rows="3" placeholder="Write a brief description that will appear on your blog's homepage..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Content</label>
+            <div id="editor"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="saveDraft()">Save Draft</button>
+            <button class="btn" onclick="exportMarkdown()">Export Markdown</button>
+            <button class="btn" onclick="previewPost()">Preview</button>
+            <button class="btn btn-primary" onclick="publishPost()">Publish Post</button>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <div id="output" class="output">
+            <h3>Generated Markdown:</h3>
+            <textarea id="markdown-output" readonly></textarea>
+            <div style="margin-top: 15px;">
+                <button class="btn" onclick="copyMarkdown()">Copy to Clipboard</button>
+                <button class="btn" onclick="downloadMarkdown()">Download .md File</button>
+            </div>
+        </div>
+        
+        <div id="preview" class="preview">
+            <h3>HTML Preview:</h3>
+            <div id="preview-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Quill editor with rich formatting
+        const quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link', 'image'],
+                    [{ 'align': [] }],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Start writing your blog post here...'
+        });
+
+        // Auto-generate slug from title
+        document.getElementById('post-title').addEventListener('input', function(e) {
+            const title = e.target.value;
+            const slug = title.toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+            document.getElementById('slug-preview').textContent = slug || 'your-post-title';
+        });
+
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        function saveDraft() {
+            const title = document.getElementById('post-title').value;
+            const excerpt = document.getElementById('post-excerpt').value;
+            const slug = document.getElementById('slug-preview').textContent;
+            
+            if (!title.trim()) {
+                showStatus('Please enter a title first', 'error');
+                return;
+            }
+            
+            const content = quill.root.innerHTML;
+            const markdown = convertToMarkdown(content);
+            const markdownFile = createMarkdownFile(title, excerpt, markdown);
+            
+            downloadFile(`${slug}.md`, markdownFile);
+            showStatus('Draft saved! Place the .md file in your drafts/ folder');
+        }
+
+        function exportMarkdown() {
+            const content = quill.root.innerHTML;
+            const markdown = convertToMarkdown(content);
+            document.getElementById('markdown-output').value = markdown;
+            document.getElementById('output').style.display = 'block';
+            showStatus('Markdown exported!');
+        }
+
+        function previewPost() {
+            const title = document.getElementById('post-title').value;
+            const content = quill.root.innerHTML;
+            
+            if (!title.trim()) {
+                showStatus('Please enter a title first', 'error');
+                return;
+            }
+            
+            const previewHtml = `
+                <h1>${title}</h1>
+                <p style="color: #666; font-size: 14px; margin-bottom: 2rem;">${new Date().toLocaleDateString()}</p>
+                <div style="font-size: 16px; line-height: 1.6;">${content}</div>
+            `;
+            
+            document.getElementById('preview-content').innerHTML = previewHtml;
+            document.getElementById('preview').style.display = 'block';
+            showStatus('Preview generated!');
+        }
+
+        function publishPost() {
+            const title = document.getElementById('post-title').value;
+            const excerpt = document.getElementById('post-excerpt').value;
+            const slug = document.getElementById('slug-preview').textContent;
+            const content = quill.root.innerHTML;
+            
+            if (!title.trim()) {
+                showStatus('Please enter a title first', 'error');
+                return;
+            }
+            
+            if (!excerpt.trim()) {
+                showStatus('Please enter an excerpt first', 'error');
+                return;
+            }
+            
+            // Create the HTML file
+            const html = createBlogPost(title, content);
+            downloadFile(`${slug}.html`, html);
+            
+            // Also create the markdown version
+            const markdown = convertToMarkdown(content);
+            const markdownFile = createMarkdownFile(title, excerpt, markdown);
+            downloadFile(`${slug}.md`, markdownFile);
+            
+            showStatus('Post files generated! Place them in your posts/ and drafts/ folders, then commit to GitHub');
+        }
+
+        function copyMarkdown() {
+            const textarea = document.getElementById('markdown-output');
+            textarea.select();
+            document.execCommand('copy');
+            showStatus('Markdown copied to clipboard!');
+        }
+
+        function downloadMarkdown() {
+            const title = document.getElementById('post-title').value;
+            const excerpt = document.getElementById('post-excerpt').value;
+            const slug = document.getElementById('slug-preview').textContent;
+            const content = quill.root.innerHTML;
+            const markdown = convertToMarkdown(content);
+            const markdownFile = createMarkdownFile(title, excerpt, markdown);
+            
+            downloadFile(`${slug}.md`, markdownFile);
+        }
+
+        function convertToMarkdown(html) {
+            // Enhanced HTML to Markdown conversion
+            let markdown = html;
+            
+            // Headers
+            markdown = markdown.replace(/<h1[^>]*>(.*?)<\/h1>/g, '# $1\n\n');
+            markdown = markdown.replace(/<h2[^>]*>(.*?)<\/h2>/g, '## $1\n\n');
+            markdown = markdown.replace(/<h3[^>]*>(.*?)<\/h3>/g, '### $1\n\n');
+            
+            // Text formatting
+            markdown = markdown.replace(/<strong[^>]*>(.*?)<\/strong>/g, '**$1**');
+            markdown = markdown.replace(/<b[^>]*>(.*?)<\/b>/g, '**$1**');
+            markdown = markdown.replace(/<em[^>]*>(.*?)<\/em>/g, '*$1*');
+            markdown = markdown.replace(/<i[^>]*>(.*?)<\/i>/g, '*$1*');
+            markdown = markdown.replace(/<u[^>]*>(.*?)<\/u>/g, '$1');
+            markdown = markdown.replace(/<s[^>]*>(.*?)<\/s>/g, '~~$1~~');
+            
+            // Links
+            markdown = markdown.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g, '[$2]($1)');
+            
+            // Images
+            markdown = markdown.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>/g, '![$2]($1)');
+            
+            // Lists
+            markdown = markdown.replace(/<ul[^>]*>(.*?)<\/ul>/gs, (match, content) => {
+                return content.replace(/<li[^>]*>(.*?)<\/li>/g, '- $1\n') + '\n';
+            });
+            markdown = markdown.replace(/<ol[^>]*>(.*?)<\/ol>/gs, (match, content) => {
+                let counter = 1;
+                return content.replace(/<li[^>]*>(.*?)<\/li>/g, () => `${counter++}. $1\n`) + '\n';
+            });
+            
+            // Blockquotes
+            markdown = markdown.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gs, (match, content) => {
+                return content.split('\n').map(line => `> ${line.trim()}`).join('\n') + '\n\n';
+            });
+            
+            // Code blocks
+            markdown = markdown.replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/gs, '```\n$1\n```\n\n');
+            markdown = markdown.replace(/<code[^>]*>(.*?)<\/code>/g, '`$1`');
+            
+            // Paragraphs and breaks
+            markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/g, '$1\n\n');
+            markdown = markdown.replace(/<br[^>]*>/g, '\n');
+            
+            // Clean up remaining HTML tags
+            markdown = markdown.replace(/<[^>]*>/g, '');
+            
+            // Clean up extra whitespace
+            markdown = markdown.replace(/\n\s*\n\s*\n/g, '\n\n');
+            markdown = markdown.trim();
+            
+            return markdown;
+        }
+
+        function createMarkdownFile(title, excerpt, content) {
+            const date = new Date().toISOString().split('T')[0];
+            return `---
+title: ${title}
+date: ${date}
+excerpt: ${excerpt}
+---
+
+# ${title}
+
+${content}`;
+        }
+
+        function createBlogPost(title, content) {
+            const date = new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - BIO2025 Blog</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <header>
+        <h1><a href="../index.html" style="text-decoration: none; color: inherit;">BIO2025 Blog</a></h1>
+    </header>
+
+    <main>
+        <article class="post">
+            <header>
+                <h1>${title}</h1>
+                <p class="post-meta">${date}</p>
+            </header>
+            <div class="post-content">
+${content}
+            </div>
+        </article>
+        
+        <nav class="post-navigation">
+            <a href="../index.html">← Back to Blog</a>
+        </nav>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 BIO2025 Blog</p>
+    </footer>
+</body>
+</html>`;
+        }
+
+        function downloadFile(filename, content) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Load demo content on page load
+        window.addEventListener('load', function() {
+            document.getElementById('post-title').value = 'My First Rich Post';
+            document.getElementById('post-excerpt').value = 'This post was created using the rich WYSIWYG editor!';
+            
+            quill.setContents([
+                { insert: 'Welcome to the Rich Editor!' },
+                { attributes: { header: 1 }, insert: '\n' },
+                { insert: '\nThis editor gives you a ' },
+                { attributes: { bold: true }, insert: 'Substack-like experience' },
+                { insert: ' for writing blog posts with:\n\n' },
+                { insert: 'Rich text formatting' },
+                { attributes: { list: 'bullet' }, insert: '\n' },
+                { insert: 'Headers and subheaders' },
+                { attributes: { list: 'bullet' }, insert: '\n' },
+                { insert: 'Links and images' },
+                { attributes: { list: 'bullet' }, insert: '\n' },
+                { insert: 'Code blocks and quotes' },
+                { attributes: { list: 'bullet' }, insert: '\n' },
+                { insert: '\nTry editing this content and then use the buttons below to export your post!\n\n' },
+                { insert: 'Pro tip: You can paste images directly into the editor.' },
+                { attributes: { italic: true }, insert: '\n' }
+            ]);
+        });
+    </script>
+</body>
+</html>

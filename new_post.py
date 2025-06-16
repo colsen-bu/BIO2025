@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Simple blog post generator for BIO2025 Blog
-Usage: python new_post.py "Post Title"
+Enhanced blog post generator for BIO2025 Blog with Markdown support
+Usage: 
+  python3 new_post.py "Post Title"           # Creates markdown file for writing
+  python3 publish_post.py post-slug          # Converts markdown to HTML and publishes
 """
 
 import os
@@ -18,112 +20,81 @@ def slugify(text):
     return text
 
 def create_post(title):
-    """Create a new blog post file and update index.html"""
+    """Create a new markdown file for writing"""
     
     # Generate filename
     slug = slugify(title)
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    filename = f"{slug}.html"
-    filepath = os.path.join("posts", filename)
+    md_filename = f"{slug}.md"
+    md_filepath = os.path.join("drafts", md_filename)
     
-    # Generate post content
-    post_content = f'''<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title} - BIO2025 Blog</title>
-    <link rel="stylesheet" href="../styles.css">
-</head>
-<body>
-    <header>
-        <h1><a href="../index.html" style="text-decoration: none; color: inherit;">BIO2025 Blog</a></h1>
-    </header>
-
-    <main>
-        <article class="post">
-            <header>
-                <h1>{title}</h1>
-                <p class="post-meta">{datetime.now().strftime("%B %d, %Y")}</p>
-            </header>
-            <div class="post-content">
-                <p>Write your post content here...</p>
-                
-                <!-- Example image -->
-                <!--
-                <figure>
-                    <img src="../media/images/your-image.jpg" alt="Description" />
-                    <figcaption>Image caption</figcaption>
-                </figure>
-                -->
-                
-                <!-- Example video -->
-                <!--
-                <figure>
-                    <video controls width="100%">
-                        <source src="../media/videos/your-video.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <figcaption>Video caption</figcaption>
-                </figure>
-                -->
-            </div>
-        </article>
-        
-        <nav class="post-navigation">
-            <a href="../index.html">← Back to Blog</a>
-        </nav>
-    </main>
-
-    <footer>
-        <p>&copy; 2025 BIO2025 Blog</p>
-    </footer>
-</body>
-</html>'''
+    # Create drafts directory if it doesn't exist
+    os.makedirs("drafts", exist_ok=True)
     
-    # Write the post file
-    with open(filepath, 'w') as f:
+    # Generate markdown content
+    post_content = f'''---
+title: {title}
+date: {datetime.now().strftime("%Y-%m-%d")}
+excerpt: Write a brief excerpt here that will appear on the homepage...
+---
+
+# {title}
+
+Write your post content here in **Markdown**! Much easier than HTML.
+
+## Adding Images
+
+You can reference images like this:
+```
+![Alt text](../media/images/your-image.jpg)
+*Image caption goes here*
+```
+
+## Adding Videos
+
+For videos, you'll need to use HTML (but just for the video tag):
+```html
+<figure>
+    <video controls width="100%">
+        <source src="../media/videos/your-video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <figcaption>Video caption</figcaption>
+</figure>
+```
+
+## Markdown Benefits
+
+- **Bold text** and *italic text*
+- [Links](https://example.com) 
+- Lists (like this one!)
+- Code blocks with syntax highlighting
+- > Blockquotes
+- Tables, headers, and more!
+
+Much easier than writing HTML by hand!
+
+---
+
+**Instructions:**
+1. Edit this file in VS Code with nice Markdown preview
+2. When ready to publish, run: `python3 publish_post.py {slug}`
+3. The script will convert to HTML and update your blog
+'''
+    
+    # Write the markdown file
+    with open(md_filepath, 'w') as f:
         f.write(post_content)
     
-    # Update index.html
-    update_index(title, filename, date_str)
-    
-    print(f"✅ Created new post: {filepath}")
-    print(f"📝 Edit the content in VS Code, then commit and push to publish!")
-    print(f"🔗 Will be available at: posts/{filename}")
-
-def update_index(title, filename, date_str):
-    """Add the new post to index.html"""
-    
-    # Read current index.html
-    with open('index.html', 'r') as f:
-        content = f.read()
-    
-    # Create new post item
-    formatted_date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%B %d, %Y")
-    new_post_item = f'''            <article class="post-item">
-                <h3><a href="posts/{filename}">{title}</a></h3>
-                <p class="post-meta">{formatted_date}</p>
-                <p class="post-excerpt">Write a brief excerpt here...</p>
-            </article>
-
-            <!-- Add new posts here - newest first -->'''
-    
-    # Replace the comment line with new post + comment
-    content = content.replace(
-        '            <!-- Add new posts here - newest first -->',
-        new_post_item
-    )
-    
-    # Write back to index.html
-    with open('index.html', 'w') as f:
-        f.write(content)
-    
-    print(f"📋 Updated index.html with new post listing")
+    print(f"✅ Created new post draft: {md_filepath}")
+    print(f"📝 Edit the Markdown file in VS Code (much easier than HTML!)")
+    print(f"� When ready to publish, run: python3 publish_post.py {slug}")
+    print(f"💡 Tip: Use Cmd+Shift+V to preview Markdown in VS Code")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python new_post.py \"Post Title\"")
+        print("Usage: python3 new_post.py \"Post Title\"")
+        print("This creates a Markdown file for easy writing.")
+        print("Use publish_post.py to convert to HTML when ready.")
         sys.exit(1)
     
     title = sys.argv[1]

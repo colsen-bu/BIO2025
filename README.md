@@ -1,11 +1,12 @@
 # BIO2025 Blog
 
-A minimal, barebones HTML blog inspired by [ssi.inc](https://ssi.inc/) that supports static media like images and timelapse videos.
+A minimal blog that supports static media like images and timelapse videos. Write in **Markdown**, publish to **HTML**.
 
 ## Features
 
 - Extremely minimal design inspired by ssi.inc
-- Individual HTML files for each post
+- **Write in Markdown** (much easier than HTML!)
+- Individual HTML files for each post  
 - Support for images and videos
 - Easy publishing workflow from VS Code
 - GitHub Pages ready
@@ -17,28 +18,38 @@ A minimal, barebones HTML blog inspired by [ssi.inc](https://ssi.inc/) that supp
 
 1. Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
 2. Type "Tasks: Run Task"
-3. Select "New Blog Post"
-4. Enter your post title
-5. Edit the generated HTML file in `posts/`
-6. Use "Publish Blog" task to push to GitHub
+3. Select **"New Blog Post (Markdown)"**
+4. Enter your post title → Creates `.md` file in `drafts/`
+5. **Edit the Markdown file** (use `Cmd+Shift+V` to preview!)
+6. When ready: Run **"Publish Post"** task → Converts to HTML
+7. Use **"Push Blog to GitHub"** task to publish live
 
-### Method 2: Using the Python Script
+### Method 2: Using Command Line
 
 ```bash
+# Create new post
 python3 new_post.py "Your Post Title"
+
+# Edit the .md file in drafts/ (much easier than HTML!)
+
+# Publish when ready
+python3 publish_post.py your-post-slug
+
+# Push to GitHub
+git add . && git commit -m "New post" && git push
 ```
 
-This will:
-- Create a new HTML file in `posts/` directory
-- Update `index.html` with the post listing
-- Generate a clean template ready for editing
+## Why This Is Better
 
-### Method 3: Manual Creation
+**Before:** Writing HTML by hand 😰
+```html
+<p>This is <strong>bold</strong> text with a <a href="link">link</a></p>
+```
 
-1. Copy `posts/post-template.html`
-2. Rename it to your post slug (e.g., `my-new-post.html`)
-3. Edit the content
-4. Add a listing to `index.html`
+**Now:** Writing Markdown 😍  
+```markdown
+This is **bold** text with a [link](link)
+```
 
 ## Adding Media
 
