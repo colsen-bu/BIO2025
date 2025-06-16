@@ -29,45 +29,95 @@ def parse_frontmatter(content):
     return frontmatter, '\n'.join(lines[content_start:])
 
 def markdown_to_html(markdown_content):
-    """Convert markdown to HTML (basic implementation)"""
+    """Convert markdown to HTML (improved implementation)"""
     html = markdown_content
     
-    # Headers
-    html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
-    html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
-    html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+    # Process in order of complexity to avoid conflicts
     
-    # Bold and italic
-    html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
-    html = re.sub(r'\*(.+?)\*', r'<em>\1</em>', html)
-    
-    # Links
-    html = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', html)
-    
-    # Images (convert to figure/figcaption)
-    html = re.sub(r'!\[(.+?)\]\((.+?)\)\n\*(.+?)\*', 
-                  r'<figure>\n    <img src="\2" alt="\1" />\n    <figcaption>\3</figcaption>\n</figure>', html)
-    html = re.sub(r'!\[(.+?)\]\((.+?)\)', r'<img src="\2" alt="\1" />', html)
-    
-    # Code blocks
+    # Code blocks first (to protect them from other processing)
     html = re.sub(r'```(\w+)?\n(.*?)\n```', r'<pre><code>\2</code></pre>', html, flags=re.DOTALL)
-    html = re.sub(r'`(.+?)`', r'<code>\1</code>', html)
+    
+    # Images with captions (must come before regular images)
+    html = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)\s*\n\*([^*]+)\*', 
+                  r'<figure>\n    <img src="\2" alt="\1" />\n    <figcaption>\3</figcaption>\n</figure>', html)
+    
+    # Regular images
+    html = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', r'<img src="\2" alt="\1" />', html)
+    
+    # Links (after images to avoid conflicts)
+    html = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', html)
+    
+    # Headers
+    html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+    html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
+    html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
+    
+    # Bold and italic (be more specific with patterns)
+    html = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', html)
+    html = re.sub(r'\*([^*]+)\*', r'<em>\1</em>', html)
+    
+    # Inline code
+    html = re.sub(r'`([^`]+)`', r'<code>\1</code>', html)
     
     # Blockquotes
     html = re.sub(r'^> (.+)$', r'<blockquote>\1</blockquote>', html, flags=re.MULTILINE)
     
-    # Lists
-    html = re.sub(r'^- (.+)$', r'<li>\1</li>', html, flags=re.MULTILINE)
-    html = re.sub(r'(<li>.*</li>)', r'<ul>\n\1\n</ul>', html, flags=re.DOTALL)
+    # Unordered lists
+    lines = html.split('\n')
+    in_list = False
+    processed_lines = []
+    
+    for line in lines:
+        if re.match(r'^- .+', line):
+            if not in_list:
+                processed_lines.append('<ul>')
+                in_list = True
+            processed_lines.append(re.sub(r'^- (.+)', r'    <li>\1</li>', line))
+        else:
+            if in_list:
+                processed_lines.append('</ul>')
+                in_list = False
+            processed_lines.append(line)
+    
+    if in_list:
+        processed_lines.append('</ul>')
+    
+    html = '\n'.join(processed_lines)
+    
+    # Ordered lists
+    lines = html.split('\n')
+    in_list = False
+    processed_lines = []
+    
+    for line in lines:
+        if re.match(r'^\d+\. .+', line):
+            if not in_list:
+                processed_lines.append('<ol>')
+                in_list = True
+            processed_lines.append(re.sub(r'^\d+\. (.+)', r'    <li>\1</li>', line))
+        else:
+            if in_list:
+                processed_lines.append('</ol>')
+                in_list = False
+            processed_lines.append(line)
+    
+    if in_list:
+        processed_lines.append('</ol>')
+    
+    html = '\n'.join(processed_lines)
     
     # Paragraphs (split by double newlines, wrap non-tag lines)
     paragraphs = html.split('\n\n')
     processed = []
     for p in paragraphs:
         p = p.strip()
-        if p and not p.startswith('<') and not p.endswith('>'):
-            p = f'<p>{p}</p>'
-        processed.append(p)
+        if p:
+            # Don't wrap if it's already a block element
+            if not re.match(r'^<(h[1-6]|ul|ol|li|blockquote|pre|figure|img)', p):
+                # Don't wrap if it contains only block elements
+                if not re.match(r'^<[^>]+>.*</[^>]+>$', p, re.DOTALL):
+                    p = f'<p>{p}</p>'
+            processed.append(p)
     
     return '\n\n'.join(processed)
 

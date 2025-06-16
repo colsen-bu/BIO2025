@@ -118,3 +118,53 @@ This blog follows the ultra-minimal aesthetic of sites like ssi.inc:
 - Use descriptive alt text for images
 - Test locally before publishing
 - Consider compressing large media files
+
+# Editing and Deleting Posts
+
+This blog now supports editing existing posts and deleting them when needed.
+
+## Editing Posts
+
+### Method 1: Using VS Code Tasks
+1. Open Command Palette (`Cmd+Shift+P`)
+2. Run "Tasks: Run Task"
+3. Select "Edit Existing Post"
+4. Choose the post you want to edit from the list
+
+### Method 2: Using the Rich Editor
+1. Open the Rich Editor (`editor.html`)
+2. Click "Load Existing Post"
+3. Select a `.md` file from drafts/ or `.html` file from posts/
+4. Edit and re-publish
+
+### Method 3: Direct File Editing
+- **Drafts**: Edit `.md` files in `drafts/` folder directly
+- **Published Posts**: Edit `.html` files in `posts/` folder directly
+
+## Deleting Posts
+
+### Using VS Code Tasks
+1. Open Command Palette (`Cmd+Shift+P`)
+2. Run "Tasks: Run Task"
+3. Select "Delete Post"
+4. Choose the post you want to delete
+5. Type "DELETE" to confirm
+
+### What Gets Deleted
+- The script will delete both the draft (.md) and published (.html) versions
+- The index.html will be automatically updated to remove the post listing
+- You'll need to commit and push the changes to update the live blog
+
+## Workflow Tips
+
+### For Draft Posts
+- Edit the `.md` file in `drafts/`
+- Use "Publish Post" task when ready to go live
+
+### For Published Posts
+- Edit the `.html` file directly for quick fixes
+- Or edit the `.md` version in `drafts/` and re-publish for major changes
+
+### Version Control
+- Always commit changes after editing or deleting posts
+- Use "Push Blog to GitHub" task to update the live blog

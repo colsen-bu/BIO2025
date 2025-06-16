@@ -193,6 +193,61 @@ footer {
     margin-top: 4rem;
 }
 
+/* Image sizing utilities */
+.img-small { 
+    max-width: 200px; 
+    height: auto; 
+}
+
+.img-medium { 
+    max-width: 400px; 
+    height: auto; 
+}
+
+.img-large { 
+    max-width: 600px; 
+    height: auto; 
+}
+
+.img-full { 
+    max-width: 100%; 
+    height: auto; 
+}
+
+.img-half { 
+    max-width: 50%; 
+    height: auto; 
+}
+
+.img-third { 
+    max-width: 33%; 
+    height: auto; 
+}
+
+/* Center images */
+.img-center {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Image with caption styling */
+.img-caption {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.img-caption img {
+    display: block;
+    margin: 0 auto 10px auto;
+}
+
+.img-caption p {
+    font-style: italic;
+    color: #666;
+    font-size: 0.9em;
+    margin: 0;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     main {

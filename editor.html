@@ -178,6 +178,7 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+ 
     </style>
 </head>
 <body>
@@ -204,11 +205,16 @@
         </div>
         
         <div class="controls">
+            <button class="btn" onclick="clearPost()">New Post</button>
+            <button class="btn" onclick="loadPost()">Load Existing Post</button>
             <button class="btn" onclick="saveDraft()">Save Draft</button>
             <button class="btn" onclick="exportMarkdown()">Export Markdown</button>
             <button class="btn" onclick="previewPost()">Preview</button>
             <button class="btn btn-primary" onclick="publishPost()">Publish Post</button>
         </div>
+        
+        <!-- Hidden file input for loading posts -->
+        <input type="file" id="file-input" accept=".md,.html" style="display: none;" />
         
         <div id="status" class="status"></div>
         
@@ -265,6 +271,14 @@
             setTimeout(() => {
                 status.style.display = 'none';
             }, 3000);
+        }
+
+        function clearPost() {
+            document.getElementById('post-title').value = '';
+            document.getElementById('post-excerpt').value = '';
+            quill.setContents([]);
+            document.getElementById('slug-preview').textContent = 'your-post-title';
+            showStatus('New post ready!');
         }
 
         function saveDraft() {
@@ -360,7 +374,7 @@
         }
 
         function convertToMarkdown(html) {
-            // Enhanced HTML to Markdown conversion
+            // HTML to Markdown conversion
             let markdown = html;
             
             // Headers
@@ -501,8 +515,162 @@ ${content}
                 { attributes: { list: 'bullet' }, insert: '\n' },
                 { insert: 'Code blocks and quotes' },
                 { attributes: { list: 'bullet' }, insert: '\n' },
-                { insert: '\nTry editing this content and then use the buttons below to export your post!\n\n' },
-                { insert: 'Pro tip: You can paste images directly into the editor.' },
+                { insert: '\nYou can paste images directly into the editor and export to both Markdown and HTML.' },
+                { attributes: { italic: true }, insert: '\n' }
+            ]);
+        });
+
+        function loadPost() {
+            const fileInput = document.getElementById('file-input');
+            fileInput.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    
+                    if (file.name.endsWith('.md')) {
+                        loadMarkdownPost(content, file.name);
+                    } else if (file.name.endsWith('.html')) {
+                        loadHtmlPost(content, file.name);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            fileInput.click();
+        }
+
+        function loadMarkdownPost(content, filename) {
+            // Extract frontmatter and content
+            const frontmatterMatch = content.match(/^---\s*\n(.*?)\n---\s*\n(.*)/s);
+            
+            let title = '';
+            let excerpt = '';
+            let markdown = content;
+            
+            if (frontmatterMatch) {
+                const frontmatter = frontmatterMatch[1];
+                markdown = frontmatterMatch[2];
+                
+                const titleMatch = frontmatter.match(/^title:\s*(.+)$/m);
+                if (titleMatch) title = titleMatch[1].trim();
+                
+                const excerptMatch = frontmatter.match(/^excerpt:\s*(.+)$/m);
+                if (excerptMatch) excerpt = excerptMatch[1].trim();
+            }
+            
+            // If no title in frontmatter, look for first # header
+            if (!title) {
+                const headerMatch = markdown.match(/^#\s+(.+)$/m);
+                if (headerMatch) {
+                    title = headerMatch[1].trim();
+                    // Remove the header from content since we'll use it as title
+                    markdown = markdown.replace(/^#\s+.+$/m, '').trim();
+                }
+            }
+            
+            // Convert markdown to Quill Delta format
+            const html = convertMarkdownToHtml(markdown);
+            
+            // Set the form values
+            document.getElementById('post-title').value = title;
+            document.getElementById('post-excerpt').value = excerpt;
+            
+            // Trigger slug generation
+            document.getElementById('post-title').dispatchEvent(new Event('input'));
+            
+            // Set editor content
+            quill.root.innerHTML = html;
+            
+            showStatus(`Loaded: ${filename}`);
+        }
+
+        function loadHtmlPost(content, filename) {
+            // Extract title from HTML
+            const titleMatch = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+            const title = titleMatch ? titleMatch[1].trim() : '';
+            
+            // Extract content from article
+            const articleMatch = content.match(/<div class="post-content"[^>]*>(.*?)<\/div>/s);
+            const postContent = articleMatch ? articleMatch[1].trim() : '';
+            
+            // Set form values
+            document.getElementById('post-title').value = title;
+            document.getElementById('post-excerpt').value = ''; // HTML posts don't typically have excerpts embedded
+            
+            // Trigger slug generation
+            document.getElementById('post-title').dispatchEvent(new Event('input'));
+            
+            // Set editor content
+            quill.root.innerHTML = postContent;
+            
+            showStatus(`Loaded: ${filename} (Note: excerpt not available from HTML)`);
+        }
+
+        function convertMarkdownToHtml(markdown) {
+            // Basic markdown to HTML conversion for loading into Quill
+            let html = markdown;
+            
+            // Headers
+            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+            
+            // Bold and italic
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            
+            // Links
+            html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>');
+            
+            // Images
+            html = html.replace(/!\[(.+?)\]\((.+?)\)/g, '<img src="$2" alt="$1">');
+            
+            // Code
+            html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+            
+            // Blockquotes
+            html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+            
+            // Lists
+            html = html.replace(/^\- (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+            
+            // Wrap list items in ul/ol tags (simplified)
+            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+            
+            // Paragraphs
+            html = html.replace(/\n\n/g, '</p><p>');
+            html = '<p>' + html + '</p>';
+            
+            // Clean up empty paragraphs
+            html = html.replace(/<p><\/p>/g, '');
+            html = html.replace(/<p>\s*<\/p>/g, '');
+            
+            return html;
+        }
+
+        // Load demo content on page load
+        window.addEventListener('load', function() {
+            document.getElementById('post-title').value = 'My First Rich Post';
+            document.getElementById('post-excerpt').value = 'This post was created using the rich WYSIWYG editor!';
+            
+            quill.setContents([
+                { insert: 'Welcome to the Rich Editor!' },
+                { attributes: { header: 1 }, insert: '\n' },
+                { insert: '\nThis editor gives you a ' },
+                { attributes: { bold: true }, insert: 'Substack-like experience' },
+                { insert: ' for writing blog posts with:\n\n' },
+                { insert: 'Rich text formatting' },
+                { attributes: { list: 'bullet' }, insert: '\n' },
+                { insert: 'Headers and subheaders' },
+                { attributes: { list: 'bullet' }, insert: '\n' },
+                { insert: 'Links and images' },
+                { attributes: { list: 'bullet' }, insert: '\n' },
+                { insert: 'Code blocks and quotes' },
+                { attributes: { list: 'bullet' }, insert: '\n' },
+                { insert: '\nYou can paste images directly into the editor and export to both Markdown and HTML.' },
                 { attributes: { italic: true }, insert: '\n' }
             ]);
         });
