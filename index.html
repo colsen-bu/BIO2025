@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Blog</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>My Blog</h1>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="blog-posts">
+            <!-- Blog posts will be added here -->
+            
+            <article class="post">
+                <header>
+                    <h2>Welcome to My Blog</h2>
+                    <p class="post-meta">Published on <time datetime="2025-06-16">June 16, 2025</time></p>
+                </header>
+                <div class="post-content">
+                    <p>This is my first blog post! This simple blog supports text, images, and videos.</p>
+                    
+                    <h3>Sample Image</h3>
+                    <figure>
+                        <img src="media/images/sample-image.jpg" alt="Sample image" />
+                        <figcaption>This is a sample image caption</figcaption>
+                    </figure>
+                    
+                    <h3>Sample Video</h3>
+                    <figure>
+                        <video controls width="100%" max-width="800px">
+                            <source src="media/videos/sample-timelapse.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <figcaption>Sample timelapse video</figcaption>
+                    </figure>
+                    
+                    <p>You can easily add more posts by creating new article sections in the HTML or by creating separate HTML files for each post.</p>
+                </div>
+            </article>
+
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 My Blog. All rights reserved.</p>
+    </footer>
+</body>
+</html>
