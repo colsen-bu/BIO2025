@@ -1,100 +1,109 @@
-# My Blog
+# BIO2025 Blog
 
-A simple, barebones HTML blog website that supports static media like images and timelapse videos.
+A minimal, barebones HTML blog inspired by [ssi.inc](https://ssi.inc/) that supports static media like images and timelapse videos.
 
 ## Features
 
-- Clean, responsive design
+- Extremely minimal design inspired by ssi.inc
+- Individual HTML files for each post
 - Support for images and videos
-- Easy to edit and maintain
+- Easy publishing workflow from VS Code
 - GitHub Pages ready
 - Mobile-friendly
 
-## How to Add New Blog Posts
+## Quick Start - Creating New Posts
 
-### Method 1: Add to index.html (Recommended for simple blogs)
+### Method 1: Using VS Code Tasks (Recommended)
 
-1. Open `index.html`
-2. Find the `<section id="blog-posts">` section
-3. Add a new `<article class="post">` before the existing posts
-4. Use this template:
+1. Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
+2. Type "Tasks: Run Task"
+3. Select "New Blog Post"
+4. Enter your post title
+5. Edit the generated HTML file in `posts/`
+6. Use "Publish Blog" task to push to GitHub
 
-```html
-<article class="post">
-    <header>
-        <h2>Your Post Title</h2>
-        <p class="post-meta">Published on <time datetime="YYYY-MM-DD">Month Day, Year</time></p>
-    </header>
-    <div class="post-content">
-        <p>Your post content here...</p>
-        
-        <!-- To add an image -->
-        <figure>
-            <img src="media/images/your-image.jpg" alt="Description" />
-            <figcaption>Image caption</figcaption>
-        </figure>
-        
-        <!-- To add a video -->
-        <figure>
-            <video controls width="100%">
-                <source src="media/videos/your-video.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <figcaption>Video caption</figcaption>
-        </figure>
-    </div>
-</article>
+### Method 2: Using the Python Script
+
+```bash
+python3 new_post.py "Your Post Title"
 ```
 
-### Method 2: Create separate post files (For larger blogs)
+This will:
+- Create a new HTML file in `posts/` directory
+- Update `index.html` with the post listing
+- Generate a clean template ready for editing
 
-1. Create a new HTML file in the `posts/` directory
-2. Use the template provided in `posts/post-template.html`
-3. Link to it from the main page
+### Method 3: Manual Creation
+
+1. Copy `posts/post-template.html`
+2. Rename it to your post slug (e.g., `my-new-post.html`)
+3. Edit the content
+4. Add a listing to `index.html`
 
 ## Adding Media
 
 ### Images
 - Add your images to `media/images/`
-- Supported formats: JPG, PNG, GIF, WebP
-- Reference them with: `media/images/filename.jpg`
+- Reference with: `../media/images/filename.jpg` (from post files)
+- Use the figure/figcaption structure for best styling
 
 ### Videos
 - Add your videos to `media/videos/`
-- Supported formats: MP4, WebM, OGV
+- Reference with: `../media/videos/filename.mp4` (from post files)
 - Keep file sizes reasonable for web loading
-- Reference them with: `media/videos/filename.mp4`
 
-## GitHub Pages Setup
+## Publishing Workflow
 
-1. Push this repository to GitHub
-2. Go to your repository settings
-3. Scroll down to "Pages" section
-4. Select "Deploy from a branch"
-5. Choose "main" branch and "/ (root)" folder
-6. Your blog will be available at `https://yourusername.github.io/repository-name`
+1. **Create** a new post (using VS Code task or script)
+2. **Edit** the post content in the generated HTML file
+3. **Preview** locally (use "Preview Blog" task or open `index.html`)
+4. **Publish** using the "Publish Blog" task or manually:
+   ```bash
+   git add .
+   git commit -m "New blog post: Your Title"
+   git push origin main
+   ```
 
-## Local Development
+## Local Preview
 
-Simply open `index.html` in your web browser to preview your blog locally.
+Use the VS Code task "Preview Blog" or run:
+```bash
+python3 -m http.server 8000
+```
+Then visit `http://localhost:8000`
 
 ## File Structure
 
 ```
 mcvc_blog/
-├── index.html          # Main blog page
-├── styles.css          # Styling
+├── index.html          # Post listing page
+├── styles.css          # Minimal styling
+├── new_post.py         # Post generator script
+├── .vscode/
+│   └── tasks.json      # VS Code tasks for easy workflow
 ├── media/
 │   ├── images/         # Store your images here
 │   └── videos/         # Store your videos here
-├── posts/              # Individual post files (optional)
-└── README.md           # This file
+├── posts/              # Individual post HTML files
+│   ├── post-template.html
+│   └── welcome.html
+└── README.md
 ```
+
+## Design Philosophy
+
+This blog follows the ultra-minimal aesthetic of sites like ssi.inc:
+- Clean typography
+- Lots of white space
+- Black text on white background
+- Simple underlined links
+- No unnecessary styling or decorations
+- Focus on content
 
 ## Tips
 
-- Keep image file sizes under 1MB for faster loading
-- Use descriptive filenames for your media
-- Always include alt text for images
-- Test your blog locally before pushing to GitHub
-- Consider compressing videos before uploading
+- Keep post titles concise and descriptive
+- Write compelling excerpts for the homepage
+- Use descriptive alt text for images
+- Test locally before publishing
+- Consider compressing large media files
