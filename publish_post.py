@@ -196,7 +196,7 @@ def publish_post(slug):
     print(f"🚀 Ready to commit and push!")
 
 def update_index(title, filename, date_str, excerpt):
-    """Add the new post to index.html"""
+    """Add the new post to index.html at the top (newest first)"""
     
     # Read current index.html
     with open('index.html', 'r') as f:
@@ -210,13 +210,21 @@ def update_index(title, filename, date_str, excerpt):
                 <p class="post-excerpt">{excerpt}</p>
             </article>
 
-            <!-- Add new posts here - newest first -->'''
+'''
     
-    # Replace the comment line with new post + comment
-    content = content.replace(
-        '            <!-- Add new posts here - newest first -->',
-        new_post_item
-    )
+    # Find the post-list div and insert the new post right after the comment
+    # This ensures new posts always appear at the top
+    post_list_pattern = r'(<!-- Posts will be listed here chronologically -->\s*\n)'
+    replacement = f'\\1\n{new_post_item}'
+    
+    content = re.sub(post_list_pattern, replacement, content)
+    
+    # If the pattern above didn't work, try the fallback method
+    if '<!-- Posts will be listed here chronologically -->' in content and new_post_item.strip() not in content:
+        content = content.replace(
+            '            <!-- Posts will be listed here chronologically -->',
+            f'            <!-- Posts will be listed here chronologically -->\n\n{new_post_item}'
+        )
     
     # Write back to index.html
     with open('index.html', 'w') as f:

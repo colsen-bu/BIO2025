@@ -18,15 +18,21 @@ def get_existing_posts():
     if os.path.exists(posts_dir):
         for filename in os.listdir(posts_dir):
             if filename.endswith('.html') and filename != 'post-template.html':
-                slug = filename[:-5]  # Remove .html extension
-                posts.append(('published', slug, os.path.join(posts_dir, filename)))
+                filepath = os.path.join(posts_dir, filename)
+                # Only add if file actually exists and is readable
+                if os.path.isfile(filepath) and os.access(filepath, os.R_OK):
+                    slug = filename[:-5]  # Remove .html extension
+                    posts.append(('published', slug, filepath))
     
     # Check drafts directory for markdown files
     if os.path.exists(drafts_dir):
         for filename in os.listdir(drafts_dir):
             if filename.endswith('.md') and filename != 'README.md':
-                slug = filename[:-3]  # Remove .md extension
-                posts.append(('draft', slug, os.path.join(drafts_dir, filename)))
+                filepath = os.path.join(drafts_dir, filename)
+                # Only add if file actually exists and is readable
+                if os.path.isfile(filepath) and os.access(filepath, os.R_OK):
+                    slug = filename[:-3]  # Remove .md extension
+                    posts.append(('draft', slug, filepath))
     
     return posts
 
@@ -75,7 +81,12 @@ def list_posts():
     print("\nExisting posts:")
     print("-" * 50)
     
+    valid_posts = []
     for i, (status, slug, filepath) in enumerate(posts, 1):
+        # Double-check that file still exists
+        if not os.path.exists(filepath):
+            continue
+            
         if status == 'published':
             title = extract_title_from_html(filepath)
         else:
@@ -84,16 +95,28 @@ def list_posts():
         title_display = title if title else slug
         status_display = "📝 DRAFT" if status == 'draft' else "✅ PUBLISHED"
         
-        print(f"{i:2d}. {status_display} - {title_display}")
+        print(f"{len(valid_posts)+1:2d}. {status_display} - {title_display}")
         print(f"    Slug: {slug}")
         print(f"    File: {filepath}")
         print()
+        
+        valid_posts.append((status, slug, filepath))
     
-    return posts
+    if not valid_posts:
+        print("No valid posts found.")
+        return None
+    
+    return valid_posts
 
 def open_post_for_editing(post_info):
     """Open a post for editing"""
     status, slug, filepath = post_info
+    
+    # Verify file still exists
+    if not os.path.exists(filepath):
+        print(f"❌ Error: File {filepath} no longer exists.")
+        print("The file may have been deleted. Please run the edit command again for an updated list.")
+        return
     
     print(f"\nOpening {filepath} for editing...")
     

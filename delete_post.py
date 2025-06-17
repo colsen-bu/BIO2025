@@ -104,16 +104,25 @@ def update_index_after_deletion(deleted_slug):
             content = f.read()
         
         # Remove the post entry from the index
-        # Look for the post link pattern
-        pattern = rf'<li[^>]*>.*?<a href="posts/{re.escape(deleted_slug)}\.html"[^>]*>.*?</a>.*?</li>'
+        # Look for the article post-item pattern that contains the specific post
+        pattern = rf'            <article class="post-item">.*?<a href="posts/{re.escape(deleted_slug)}\.html"[^>]*>.*?</article>\s*'
         updated_content = re.sub(pattern, '', content, flags=re.DOTALL)
         
-        # Also remove any standalone links that might exist
-        pattern2 = rf'<a href="posts/{re.escape(deleted_slug)}\.html"[^>]*>.*?</a>'
-        updated_content = re.sub(pattern2, '', updated_content, flags=re.DOTALL)
+        # If the first pattern didn't work, try a more flexible approach
+        if f'posts/{deleted_slug}.html' in updated_content:
+            # Split by articles and filter out the one containing our slug
+            articles = re.split(r'(<article class="post-item">.*?</article>)', content, flags=re.DOTALL)
+            filtered_articles = []
+            for part in articles:
+                if f'posts/{deleted_slug}.html' not in part:
+                    filtered_articles.append(part)
+            updated_content = ''.join(filtered_articles)
         
-        # Clean up any empty lines
+        # Clean up any extra whitespace left behind
         updated_content = re.sub(r'\n\s*\n\s*\n', '\n\n', updated_content)
+        
+        # Also clean up any standalone empty lines around the deleted content
+        updated_content = re.sub(r'(\n\s*){3,}', '\n\n', updated_content)
         
         with open(index_file, 'w', encoding='utf-8') as f:
             f.write(updated_content)
